@@ -1,11 +1,16 @@
 {
   "name": "incedentops",
-  "private": true,
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
   "workspaces": [
     "ApiGetway",
-    "notification-service"
+    "notification-service",
+    "alerting-service",
+    "incident-service"
   ],
   "scripts": {
-    "setup": "npm install --workspaces"
+    "setup": "npm install --workspaces",
+    "start": "start-all.bat"
   }
 }

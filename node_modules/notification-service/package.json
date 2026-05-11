@@ -6,10 +6,12 @@
     "start": "node index.js"
   },
   "dependencies": {
+    "@apollo/server": "5.5.1",
     "@grpc/grpc-js": "^1.10.0",
     "@grpc/proto-loader": "^0.7.10",
     "kafkajs": "^2.2.4",
-    "rxdb": "^15.14.0",
+    "p-queue": "^6.6.2",
+    "rxdb": "^17.2.0",
     "uuid": "^9.0.0"
   }
 }
