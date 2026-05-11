@@ -1,0 +1,37 @@
+const { Kafka } = require('kafkajs');
+const db = require('../db/setup');
+const { v4: uuidv4 } = require('uuid');
+
+const kafka = new Kafka({
+  clientId: 'incident-service-consumer',
+  brokers: ['localhost:9092'],
+  retry: { retries: 5, initialRetryTime: 300 }
+});
+
+const consumer = kafka.consumer({ groupId: 'incident-notif-group' });
+
+async function startConsumer() {
+  await consumer.connect();
+  await consumer.subscribe({ topic: 'notification.sent', fromBeginning: false });
+
+  await consumer.run({
+    eachMessage: async ({ message }) => {
+      try {
+        const data = JSON.parse(message.value.toString());
+        console.log(`[Incident] Confirmation de notification reçue pour incident ${data.incident_id} via ${data.channel}`);
+
+        const stmt = db.prepare(`
+          INSERT OR IGNORE INTO notification_confirmations (id, incident_id, channel, confirmed_at)
+          VALUES (?, ?, ?, ?)
+        `);
+        stmt.run(uuidv4(), data.incident_id, data.channel, new Date().toISOString());
+      } catch (err) {
+        console.error('[Incident] Erreur traitement notification.sent:', err.message);
+      }
+    }
+  });
+
+  console.log('[Incident] Consumer Kafka → notification.sent démarré');
+}
+
+module.exports = { startConsumer };

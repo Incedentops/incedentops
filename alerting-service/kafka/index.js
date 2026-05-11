@@ -1,0 +1,79 @@
+const { Kafka } = require('kafkajs');
+const { v4: uuidv4 } = require('uuid');
+
+const kafka = new Kafka({
+  clientId: 'alerting-service',
+  brokers: ['localhost:9092'],
+  retry: { retries: 5, initialRetryTime: 300 }
+});
+
+const consumer = kafka.consumer({ groupId: 'alerting-group' });
+const producer = kafka.producer();
+
+const SEVERITY_LEVELS = { LOW: 1, MEDIUM: 2, HIGH: 3, CRITICAL: 4 };
+
+async function startKafka(db) {
+  await producer.connect();
+  await consumer.connect();
+  await consumer.subscribe({ topic: 'incident.created', fromBeginning: false });
+
+  await consumer.run({
+    eachMessage: async ({ message }) => {
+      try {
+        const data = JSON.parse(message.value.toString());
+        console.log(`[Alerting] incident.created reçu: ${data.incident_id} | severity: ${data.severity}`);
+
+        // Évaluer les règles
+        const rules = db.prepare('SELECT * FROM rules').all();
+        const incidentLevel = SEVERITY_LEVELS[data.severity] || 0;
+
+        for (const rule of rules) {
+          const ruleLevel = SEVERITY_LEVELS[rule.severity_threshold] || 0;
+          const serviceMatch = !rule.service_name || rule.service_name === data.service_name;
+
+          if (incidentLevel >= ruleLevel && serviceMatch) {
+            const alertId = uuidv4();
+            const now = new Date().toISOString();
+
+            db.prepare(`
+              INSERT INTO alerts (id, incident_id, rule_id, rule_name, channel, triggered_at)
+              VALUES (?, ?, ?, ?, ?, ?)
+            `).run(alertId, data.incident_id, rule.id, rule.name, rule.channel, now);
+
+            // Publier sur alert.triggered
+            await producer.send({
+              topic: 'alert.triggered',
+              messages: [{
+                key: data.incident_id,
+                value: JSON.stringify({
+                  incident_id: data.incident_id,
+                  title: data.title,
+                  severity: data.severity,
+                  service_name: data.service_name,
+                  rule_name: rule.name,
+                  channel: rule.channel,
+                  triggered_at: now
+                })
+              }]
+            });
+
+            console.log(`[Alerting] Alerte déclenchée → canal: ${rule.channel} | règle: "${rule.name}"`);
+          }
+        }
+      } catch (err) {
+        console.error('[Alerting] Erreur traitement incident.created:', err.message);
+      }
+    }
+  });
+
+  console.log('[Alerting] Kafka consumer/producer démarrés');
+}
+
+async function publishAlertTriggered(payload) {
+  await producer.send({
+    topic: 'alert.triggered',
+    messages: [{ key: payload.incident_id, value: JSON.stringify(payload) }]
+  });
+}
+
+module.exports = { startKafka, publishAlertTriggered };

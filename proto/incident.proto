@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package incident;
+
+service IncidentService {
+  rpc CreateIncident (CreateIncidentRequest) returns (IncidentResponse);
+  rpc GetIncident (GetIncidentRequest) returns (IncidentResponse);
+  rpc ListIncidents (ListIncidentsRequest) returns (ListIncidentsResponse);
+  rpc UpdateIncident (UpdateIncidentRequest) returns (IncidentResponse);
+  rpc CloseIncident (CloseIncidentRequest) returns (IncidentResponse);
+}
+
+message CreateIncidentRequest {
+  string title = 1;
+  string description = 2;
+  string severity = 3; // LOW, MEDIUM, HIGH, CRITICAL
+  string service_name = 4;
+}
+
+message GetIncidentRequest {
+  string id = 1;
+}
+
+message ListIncidentsRequest {
+  string status = 1; // OPEN, CLOSED, ALL
+}
+
+message UpdateIncidentRequest {
+  string id = 1;
+  string severity = 2;
+  string status = 3;
+  string assigned_to = 4;
+}
+
+message CloseIncidentRequest {
+  string id = 1;
+  string resolution = 2;
+}
+
+message IncidentResponse {
+  string id = 1;
+  string title = 2;
+  string description = 3;
+  string severity = 4;
+  string status = 5;
+  string service_name = 6;
+  string assigned_to = 7;
+  string resolution = 8;
+  string created_at = 9;
+  string updated_at = 10;
+  bool success = 11;
+  string error = 12;
+}
+
+message ListIncidentsResponse {
+  repeated IncidentResponse incidents = 1;
+  int32 total = 2;
+}

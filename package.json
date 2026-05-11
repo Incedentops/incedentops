@@ -6,6 +6,6 @@
     "notification-service"
   ],
   "scripts": {
-    "install": "npm install --workspaces"
+    "setup": "npm install --workspaces"
   }
 }

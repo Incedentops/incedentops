@@ -1,0 +1,130 @@
+const grpc = require('@grpc/grpc-js');
+const protoLoader = require('@grpc/proto-loader');
+const path = require('path');
+const { v4: uuidv4 } = require('uuid');
+const db = require('./db/setup');
+const { startKafka, publishAlertTriggered } = require('./kafka/index');
+
+const PROTO_PATH = path.join(__dirname, '../proto/alerting.proto');
+
+const packageDef = protoLoader.loadSync(PROTO_PATH, {
+  keepCase: true, longs: String, enums: String, defaults: true, oneofs: true
+});
+
+const alertingProto = grpc.loadPackageDefinition(packageDef).alerting;
+
+const SEVERITY_LEVELS = { LOW: 1, MEDIUM: 2, HIGH: 3, CRITICAL: 4 };
+
+// ─── Handlers gRPC ───────────────────────────────────────────────────────────
+
+function CreateRule(call, callback) {
+  try {
+    const { name, severity_threshold, service_name, channel } = call.request;
+    if (!name || !severity_threshold || !channel) {
+      return callback(null, { success: false, error: 'name, severity_threshold et channel sont requis' });
+    }
+    const validSeverities = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
+    if (!validSeverities.includes(severity_threshold.toUpperCase())) {
+      return callback(null, { success: false, error: 'severity_threshold invalide' });
+    }
+
+    const id = uuidv4();
+    const now = new Date().toISOString();
+    db.prepare(`INSERT INTO rules (id, name, severity_threshold, service_name, channel, created_at) VALUES (?, ?, ?, ?, ?, ?)`)
+      .run(id, name, severity_threshold.toUpperCase(), service_name || '', channel, now);
+
+    const rule = db.prepare('SELECT * FROM rules WHERE id = ?').get(id);
+    console.log(`[Alerting] Règle créée: "${name}" | seuil: ${severity_threshold} | canal: ${channel}`);
+    callback(null, { ...rule, success: true });
+  } catch (err) {
+    callback(null, { success: false, error: err.message });
+  }
+}
+
+function ListRules(call, callback) {
+  try {
+    const rules = db.prepare('SELECT * FROM rules ORDER BY created_at DESC').all();
+    callback(null, { rules });
+  } catch (err) {
+    callback(null, { rules: [] });
+  }
+}
+
+function DeleteRule(call, callback) {
+  try {
+    const { id } = call.request;
+    const rule = db.prepare('SELECT * FROM rules WHERE id = ?').get(id);
+    if (!rule) return callback(null, { success: false, error: 'Règle non trouvée' });
+    db.prepare('DELETE FROM rules WHERE id = ?').run(id);
+    callback(null, { success: true });
+  } catch (err) {
+    callback(null, { success: false, error: err.message });
+  }
+}
+
+function EvaluateIncident(call, callback) {
+  try {
+    const { incident_id, severity, service_name, title } = call.request;
+    const rules = db.prepare('SELECT * FROM rules').all();
+    const incidentLevel = SEVERITY_LEVELS[severity] || 0;
+    const matchedRules = [];
+    let topChannel = 'slack';
+
+    for (const rule of rules) {
+      const ruleLevel = SEVERITY_LEVELS[rule.severity_threshold] || 0;
+      const serviceMatch = !rule.service_name || rule.service_name === service_name;
+      if (incidentLevel >= ruleLevel && serviceMatch) {
+        matchedRules.push(rule.name);
+        topChannel = rule.channel;
+
+        // Enregistrer l'alerte et publier
+        const alertId = uuidv4();
+        const now = new Date().toISOString();
+        db.prepare(`INSERT OR IGNORE INTO alerts (id, incident_id, rule_id, rule_name, channel, triggered_at) VALUES (?, ?, ?, ?, ?, ?)`)
+          .run(alertId, incident_id, rule.id, rule.name, rule.channel, now);
+
+        publishAlertTriggered({ incident_id, title, severity, service_name, rule_name: rule.name, channel: rule.channel, triggered_at: now })
+          .catch(err => console.error('[Alerting] Erreur publication:', err.message));
+      }
+    }
+
+    callback(null, {
+      alert_triggered: matchedRules.length > 0,
+      matched_rules: matchedRules,
+      channel: topChannel
+    });
+  } catch (err) {
+    callback(null, { alert_triggered: false, matched_rules: [], channel: '' });
+  }
+}
+
+function ListAlerts(call, callback) {
+  try {
+    const alerts = db.prepare('SELECT * FROM alerts ORDER BY triggered_at DESC').all();
+    callback(null, { alerts });
+  } catch (err) {
+    callback(null, { alerts: [] });
+  }
+}
+
+// ─── Démarrage ────────────────────────────────────────────────────────────────
+
+async function main() {
+  try {
+    await startKafka(db);
+  } catch (err) {
+    console.warn('[Alerting] Kafka indisponible, démarrage sans consumer:', err.message);
+  }
+
+  const server = new grpc.Server();
+  server.addService(alertingProto.AlertingService.service, {
+    CreateRule, ListRules, DeleteRule, EvaluateIncident, ListAlerts
+  });
+
+  server.bindAsync('0.0.0.0:50052', grpc.ServerCredentials.createInsecure(), (err, port) => {
+    if (err) { console.error('[Alerting] Erreur:', err); process.exit(1); }
+    console.log(`[Alerting] Service gRPC démarré sur le port ${port}`);
+  });
+}
+
+main();

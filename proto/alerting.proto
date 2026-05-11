@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+package alerting;
+
+service AlertingService {
+  rpc CreateRule (CreateRuleRequest) returns (RuleResponse);
+  rpc ListRules (ListRulesRequest) returns (ListRulesResponse);
+  rpc DeleteRule (DeleteRuleRequest) returns (DeleteRuleResponse);
+  rpc EvaluateIncident (EvaluateRequest) returns (EvaluateResponse);
+  rpc ListAlerts (ListAlertsRequest) returns (ListAlertsResponse);
+}
+
+message CreateRuleRequest {
+  string name = 1;
+  string severity_threshold = 2; // MIN severity to trigger alert
+  string service_name = 3;       // empty = applies to all services
+  string channel = 4;            // slack, email, sms
+}
+
+message ListRulesRequest {}
+
+message DeleteRuleRequest {
+  string id = 1;
+}
+
+message DeleteRuleResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message EvaluateRequest {
+  string incident_id = 1;
+  string severity = 2;
+  string service_name = 3;
+  string title = 4;
+}
+
+message EvaluateResponse {
+  bool alert_triggered = 1;
+  repeated string matched_rules = 2;
+  string channel = 3;
+}
+
+message RuleResponse {
+  string id = 1;
+  string name = 2;
+  string severity_threshold = 3;
+  string service_name = 4;
+  string channel = 5;
+  string created_at = 6;
+  bool success = 7;
+  string error = 8;
+}
+
+message ListRulesResponse {
+  repeated RuleResponse rules = 1;
+}
+
+message AlertResponse {
+  string id = 1;
+  string incident_id = 2;
+  string rule_name = 3;
+  string channel = 4;
+  string triggered_at = 5;
+}
+
+message ListAlertsRequest {}
+
+message ListAlertsResponse {
+  repeated AlertResponse alerts = 1;
+}
