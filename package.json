@@ -1,0 +1,11 @@
+{
+  "name": "incedentops",
+  "private": true,
+  "workspaces": [
+    "ApiGetway",
+    "notification-service"
+  ],
+  "scripts": {
+    "install": "npm install --workspaces"
+  }
+}

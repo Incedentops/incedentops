@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package notification;
+
+service NotificationService {
+  rpc SendNotification (SendNotificationRequest) returns (NotificationResponse);
+  rpc ListNotifications (ListNotificationsRequest) returns (ListNotificationsResponse);
+  rpc GetStats (GetStatsRequest) returns (StatsResponse);
+}
+
+message SendNotificationRequest {
+  string incident_id = 1;
+  string channel = 2;      // slack, email, sms
+  string message = 3;
+  string severity = 4;
+  string rule_name = 5;
+}
+
+message ListNotificationsRequest {
+  string incident_id = 1; // empty = all
+}
+
+message GetStatsRequest {}
+
+message NotificationResponse {
+  string id = 1;
+  string incident_id = 2;
+  string channel = 3;
+  string status = 4; // SENT, FAILED
+  string sent_at = 5;
+  bool success = 6;
+  string error = 7;
+}
+
+message ListNotificationsResponse {
+  repeated NotificationResponse notifications = 1;
+  int32 total = 2;
+}
+
+message StatsResponse {
+  int32 total_sent = 1;
+  int32 total_failed = 2;
+  int32 slack_count = 3;
+  int32 email_count = 4;
+  int32 sms_count = 5;
+}
