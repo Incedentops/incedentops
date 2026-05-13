@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IncidentOps — API Dashboard</title>
+  <meta name="description" content="Dashboard professionnel pour gérer et tester les APIs IncidentOps (REST & GraphQL)." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      </div>
+      <span class="logo-text">IncidentOps</span>
+    </div>
+
+    <div class="sidebar-section-label">Navigation</div>
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" data-section="overview" id="nav-overview">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Vue d'ensemble
+      </a>
+      <a href="#" class="nav-item" data-section="incidents" id="nav-incidents">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Incidents
+        <span class="badge" id="badge-incidents">0</span>
+      </a>
+      <a href="#" class="nav-item" data-section="rules" id="nav-rules">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        Règles d'alerte
+        <span class="badge" id="badge-rules">0</span>
+      </a>
+      <a href="#" class="nav-item" data-section="alerts" id="nav-alerts">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        Alertes
+        <span class="badge badge-red" id="badge-alerts">0</span>
+      </a>
+      <a href="#" class="nav-item" data-section="notifications" id="nav-notifications">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        Notifications
+      </a>
+      <a href="#" class="nav-item" data-section="graphql" id="nav-graphql">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+        GraphQL
+      </a>
+    </nav>
+
+    <div class="sidebar-section-label">Système</div>
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item" data-section="settings" id="nav-settings">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        Paramètres
+      </a>
+    </nav>
+
+    <div class="sidebar-status">
+      <div class="status-dot" id="status-dot"></div>
+      <div>
+        <div class="status-label">API Gateway</div>
+        <div class="status-url" id="status-url">localhost:3000</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <!-- Top bar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <h1 class="page-title" id="page-title">Vue d'ensemble</h1>
+      </div>
+      <div class="topbar-right">
+        <div class="health-pill" id="health-pill">
+          <span class="health-dot"></span>
+          <span id="health-label">Vérification...</span>
+        </div>
+        <button class="btn btn-ghost" onclick="refreshAll()" title="Actualiser">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+        </button>
+        <div class="avatar">IO</div>
+      </div>
+    </header>
+
+    <!-- Toast container -->
+    <div id="toast-container"></div>
+
+    <!-- Sections -->
+
+    <!-- OVERVIEW -->
+    <section class="section active" id="section-overview">
+      <div class="stats-grid">
+        <div class="stat-card" onclick="goSection('incidents')">
+          <div class="stat-icon stat-blue">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value" id="stat-incidents">—</div>
+            <div class="stat-label">Incidents</div>
+          </div>
+          <div class="stat-arrow">→</div>
+        </div>
+        <div class="stat-card" onclick="goSection('rules')">
+          <div class="stat-icon stat-green">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value" id="stat-rules">—</div>
+            <div class="stat-label">Règles actives</div>
+          </div>
+          <div class="stat-arrow">→</div>
+        </div>
+        <div class="stat-card" onclick="goSection('alerts')">
+          <div class="stat-icon stat-orange">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value" id="stat-alerts">—</div>
+            <div class="stat-label">Alertes déclenchées</div>
+          </div>
+          <div class="stat-arrow">→</div>
+        </div>
+        <div class="stat-card" onclick="goSection('notifications')">
+          <div class="stat-icon stat-purple">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value" id="stat-notifs">—</div>
+            <div class="stat-label">Notifications envoyées</div>
+          </div>
+          <div class="stat-arrow">→</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Derniers incidents</h2>
+            <button class="btn btn-sm btn-primary" onclick="goSection('incidents')">Voir tout</button>
+          </div>
+          <div id="overview-incidents-list" class="item-list">
+            <div class="skeleton-list"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Stats notifications</h2>
+          </div>
+          <div id="overview-notif-stats" class="notif-stats-grid">
+            <div class="skeleton-list"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- INCIDENTS -->
+    <section class="section" id="section-incidents">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Créer un incident</h2>
+          <button class="btn btn-ghost btn-sm" onclick="toggleForm('form-create-incident')">+ Nouveau</button>
+        </div>
+        <div id="form-create-incident" class="form-panel hidden">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Titre *</label>
+              <input id="inc-title" type="text" placeholder="Ex: API timeout sur payment-service" />
+            </div>
+            <div class="form-group">
+              <label>Service</label>
+              <input id="inc-service" type="text" placeholder="Ex: payment-service" />
+            </div>
+            <div class="form-group">
+              <label>Sévérité *</label>
+              <select id="inc-severity">
+                <option value="LOW">LOW</option>
+                <option value="MEDIUM" selected>MEDIUM</option>
+                <option value="HIGH">HIGH</option>
+                <option value="CRITICAL">CRITICAL</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Description</label>
+              <input id="inc-desc" type="text" placeholder="Description détaillée..." />
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-primary" onclick="createIncident()">Créer l'incident</button>
+            <button class="btn btn-ghost" onclick="toggleForm('form-create-incident')">Annuler</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mt-4">
+        <div class="card-header">
+          <h2 class="card-title">Liste des incidents</h2>
+          <div class="filter-group">
+            <select id="filter-status" onchange="loadIncidents()">
+              <option value="ALL">Tous</option>
+              <option value="OPEN">OPEN</option>
+              <option value="IN_PROGRESS">IN_PROGRESS</option>
+              <option value="CLOSED">CLOSED</option>
+            </select>
+          </div>
+        </div>
+        <div id="incidents-list" class="table-wrap">
+          <div class="skeleton-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RULES -->
+    <section class="section" id="section-rules">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Créer une règle d'alerte</h2>
+          <button class="btn btn-ghost btn-sm" onclick="toggleForm('form-create-rule')">+ Nouvelle règle</button>
+        </div>
+        <div id="form-create-rule" class="form-panel hidden">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Nom *</label>
+              <input id="rule-name" type="text" placeholder="Ex: critical-payment-alert" />
+            </div>
+            <div class="form-group">
+              <label>Service</label>
+              <input id="rule-service" type="text" placeholder="Ex: payment-service" />
+            </div>
+            <div class="form-group">
+              <label>Seuil sévérité *</label>
+              <select id="rule-threshold">
+                <option value="LOW">LOW</option>
+                <option value="MEDIUM">MEDIUM</option>
+                <option value="HIGH">HIGH</option>
+                <option value="CRITICAL">CRITICAL</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Canal *</label>
+              <select id="rule-channel">
+                <option value="slack">Slack</option>
+                <option value="email">Email</option>
+                <option value="sms">SMS</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-primary" onclick="createRule()">Créer la règle</button>
+            <button class="btn btn-ghost" onclick="toggleForm('form-create-rule')">Annuler</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mt-4">
+        <div class="card-header">
+          <h2 class="card-title">Règles d'alerte actives</h2>
+        </div>
+        <div id="rules-list" class="table-wrap">
+          <div class="skeleton-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ALERTS -->
+    <section class="section" id="section-alerts">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Alertes déclenchées</h2>
+          <button class="btn btn-ghost btn-sm" onclick="loadAlerts()">↻ Actualiser</button>
+        </div>
+        <div id="alerts-list" class="table-wrap">
+          <div class="skeleton-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- NOTIFICATIONS -->
+    <section class="section" id="section-notifications">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Envoyer une notification</h2>
+          <button class="btn btn-ghost btn-sm" onclick="toggleForm('form-send-notif')">+ Envoyer</button>
+        </div>
+        <div id="form-send-notif" class="form-panel hidden">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Incident ID *</label>
+              <input id="notif-incident-id" type="text" placeholder="UUID de l'incident" />
+            </div>
+            <div class="form-group">
+              <label>Canal *</label>
+              <select id="notif-channel">
+                <option value="slack">Slack</option>
+                <option value="email">Email</option>
+                <option value="sms">SMS</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Sévérité</label>
+              <select id="notif-severity">
+                <option value="LOW">LOW</option>
+                <option value="MEDIUM">MEDIUM</option>
+                <option value="HIGH">HIGH</option>
+                <option value="CRITICAL">CRITICAL</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Message *</label>
+              <input id="notif-message" type="text" placeholder="Contenu du message..." />
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-primary" onclick="sendNotification()">Envoyer</button>
+            <button class="btn btn-ghost" onclick="toggleForm('form-send-notif')">Annuler</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mt-4">
+        <div class="card-header">
+          <h2 class="card-title">Historique des notifications</h2>
+          <input id="filter-notif-id" type="text" placeholder="Filtrer par incident ID..." class="input-sm" onchange="loadNotifications()" />
+        </div>
+        <div id="notifications-list" class="table-wrap">
+          <div class="skeleton-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- GRAPHQL -->
+    <section class="section" id="section-graphql">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">GraphQL Explorer</h2>
+          <div class="gql-presets">
+            <span class="preset-label">Presets :</span>
+            <button class="btn btn-xs" onclick="setGqlPreset('listIncidents')">Incidents</button>
+            <button class="btn btn-xs" onclick="setGqlPreset('listRules')">Règles</button>
+            <button class="btn btn-xs" onclick="setGqlPreset('listAlerts')">Alertes</button>
+            <button class="btn btn-xs" onclick="setGqlPreset('stats')">Stats</button>
+            <button class="btn btn-xs" onclick="setGqlPreset('createIncident')">Create Incident</button>
+          </div>
+        </div>
+        <div class="gql-workspace">
+          <div class="gql-editor-wrap">
+            <div class="gql-editor-label">Requête GraphQL</div>
+            <textarea id="gql-query" class="gql-editor" spellcheck="false" placeholder="{ incidents { id title severity status } }"></textarea>
+            <div class="gql-editor-label mt-2">Variables (JSON)</div>
+            <textarea id="gql-vars" class="gql-editor gql-vars-editor" spellcheck="false" placeholder='{ "id": "..." }'></textarea>
+            <button class="btn btn-primary gql-run-btn" onclick="runGraphQL()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Exécuter
+            </button>
+          </div>
+          <div class="gql-result-wrap">
+            <div class="gql-editor-label">Réponse</div>
+            <pre id="gql-result" class="gql-result">// Résultat apparaîtra ici...</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="section" id="section-settings">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Configuration API Gateway</h2>
+        </div>
+        <div class="settings-form">
+          <div class="form-group">
+            <label>URL du Gateway</label>
+            <div class="input-with-btn">
+              <input id="setting-url" type="text" value="http://localhost:3000" />
+              <button class="btn btn-primary" onclick="saveSettings()">Enregistrer</button>
+            </div>
+            <div class="form-hint">L'URL de base de votre API Gateway IncidentOps.</div>
+          </div>
+          <div class="settings-endpoints">
+            <div class="card-title mb-3">Endpoints disponibles</div>
+            <div class="endpoint-list" id="endpoint-list"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Modal for incident details -->
+  <div class="modal-overlay hidden" id="modal-overlay" onclick="closeModal()">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 id="modal-title">Détail incident</h3>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div id="modal-body" class="modal-body"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
