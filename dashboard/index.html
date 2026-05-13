@@ -44,6 +44,10 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
         Notifications
       </a>
+      <a href="#" class="nav-item" data-section="apitester" id="nav-apitester">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+        API Tester
+      </a>
       <a href="#" class="nav-item" data-section="graphql" id="nav-graphql">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
         GraphQL
@@ -327,6 +331,123 @@
         </div>
         <div id="notifications-list" class="table-wrap">
           <div class="skeleton-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- API TESTER -->
+    <section class="section" id="section-apitester">
+      <div class="apitester-layout">
+        <!-- Left: endpoint list -->
+        <div class="apitester-sidebar">
+          <div class="apitester-sidebar-title">Endpoints REST</div>
+
+          <div class="apitester-group">
+            <div class="apitester-group-label">🔍 Système</div>
+            <button class="apitester-ep-btn" onclick="loadTesterEndpoint('GET','/health',null,'Health check')">
+              <span class="endpoint-method m-get">GET</span><span>/health</span>
+            </button>
+          </div>
+
+          <div class="apitester-group">
+            <div class="apitester-group-label">⚡ Incidents</div>
+            <button class="apitester-ep-btn" onclick="loadTesterEndpoint('GET','/api/incidents?status=ALL',null,'Lister tous les incidents')">
+              <span class="endpoint-method m-get">GET</span><span>/api/incidents</span>
+            </button>
+            <button class="apitester-ep-btn" onclick="loadTesterEndpoint('POST','/api/incidents',JSON.stringify({title:'Panne API paiement',severity:'HIGH',service_name:'payment-service',description:'L\'API ne répond plus'},null,2),'Créer un incident')">
+              <span class="endpoint-method m-post">POST</span><span>/api/incidents</span>
+            </button>
+            <button class="apitester-ep-btn" onclick="loadTesterEndpoint('GET','/api/incidents/:id',null,'Obtenir un incident par ID')">
+              <span class="endpoint-method m-get">GET</span><span>/api/incidents/:id</span>
+            </button>
+            <button class="apitester-ep-btn" onclick="loadTesterEndpoint('PATCH','/api/incidents/:id',JSON.stringify({severity:'CRITICAL',status:'IN_PROGRESS',assigned_to:'alice@team.io'},null,2),'Modifier un incident')">
+              <span class="endpoint-method m-patch">PATCH</span><span>/api/incidents/:id</span>
+            </button>
+            <button class="apitester-ep-btn" onclick="loadTesterEndpoint('POST','/api/incidents/:id/close',JSON.stringify({resolution:'Redémarrage effectué'},null,2),'Fermer un incident')">
+              <span class="endpoint-method m-post">POST</span><span>/api/incidents/:id/close</span>
+            </button>
+          </div>
+
+          <div class="apitester-group">
+            <div class="apitester-group-label">🔔 Règles</div>
+            <button class="apitester-ep-btn" onclick="loadTesterEndpoint('GET','/api/rules',null,'Lister les règles')">
+              <span class="endpoint-method m-get">GET</span><span>/api/rules</span>
+            </button>
+            <button class="apitester-ep-btn" onclick="loadTesterEndpoint('POST','/api/rules',JSON.stringify({name:'alerte-critique',severity_threshold:'HIGH',service_name:'payment-service',channel:'slack'},null,2),'Créer une règle')">
+              <span class="endpoint-method m-post">POST</span><span>/api/rules</span>
+            </button>
+            <button class="apitester-ep-btn" onclick="loadTesterEndpoint('DELETE','/api/rules/:id',null,'Supprimer une règle')">
+              <span class="endpoint-method m-delete">DELETE</span><span>/api/rules/:id</span>
+            </button>
+          </div>
+
+          <div class="apitester-group">
+            <div class="apitester-group-label">⚠️ Alertes</div>
+            <button class="apitester-ep-btn" onclick="loadTesterEndpoint('GET','/api/alerts',null,'Lister les alertes')">
+              <span class="endpoint-method m-get">GET</span><span>/api/alerts</span>
+            </button>
+          </div>
+
+          <div class="apitester-group">
+            <div class="apitester-group-label">📨 Notifications</div>
+            <button class="apitester-ep-btn" onclick="loadTesterEndpoint('GET','/api/notifications',null,'Lister les notifications')">
+              <span class="endpoint-method m-get">GET</span><span>/api/notifications</span>
+            </button>
+            <button class="apitester-ep-btn" onclick="loadTesterEndpoint('GET','/api/notifications/stats',null,'Stats notifications')">
+              <span class="endpoint-method m-get">GET</span><span>/api/notifications/stats</span>
+            </button>
+            <button class="apitester-ep-btn" onclick="loadTesterEndpoint('POST','/api/notifications',JSON.stringify({incident_id:'REMPLACER_PAR_UUID',channel:'slack',message:'Incident critique détecté !',severity:'HIGH'},null,2),'Envoyer une notification')">
+              <span class="endpoint-method m-post">POST</span><span>/api/notifications</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Right: request/response panel -->
+        <div class="apitester-main">
+          <div class="apitester-request-bar">
+            <select id="tester-method" class="tester-method-select">
+              <option value="GET">GET</option>
+              <option value="POST">POST</option>
+              <option value="PATCH">PATCH</option>
+              <option value="DELETE">DELETE</option>
+            </select>
+            <input id="tester-url" type="text" class="tester-url-input" placeholder="/api/incidents" />
+            <button class="btn btn-primary" onclick="runTesterRequest()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Envoyer
+            </button>
+            <button class="btn btn-ghost" onclick="copyTesterCurl()" title="Copier la commande curl">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              curl
+            </button>
+          </div>
+
+          <div class="apitester-desc" id="tester-desc">← Sélectionne un endpoint dans la liste</div>
+
+          <div class="apitester-panels">
+            <div class="apitester-panel">
+              <div class="apitester-panel-header">
+                <span class="apitester-panel-title">Corps de la requête (JSON)</span>
+                <button class="btn btn-xs btn-ghost" onclick="document.getElementById('tester-body').value=''" title="Vider">Vider</button>
+              </div>
+              <textarea id="tester-body" class="tester-editor" spellcheck="false" placeholder='{ "title": "...", "severity": "HIGH" }'></textarea>
+            </div>
+            <div class="apitester-panel">
+              <div class="apitester-panel-header">
+                <span class="apitester-panel-title">Réponse</span>
+                <span id="tester-status-badge" class="tester-status-badge"></span>
+              </div>
+              <pre id="tester-result" class="tester-result">// La réponse apparaîtra ici...</pre>
+            </div>
+          </div>
+
+          <div class="apitester-curl-wrap">
+            <div class="apitester-panel-header">
+              <span class="apitester-panel-title">Commande curl équivalente</span>
+              <button class="btn btn-xs btn-ghost" onclick="copyTesterCurl()">📋 Copier</button>
+            </div>
+            <pre id="tester-curl" class="tester-curl">curl http://localhost:3000/health</pre>
+          </div>
         </div>
       </div>
     </section>

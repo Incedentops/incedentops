@@ -9,10 +9,10 @@ function api(path, opts = {}) {
 }
 
 /* ===== NAVIGATION ===== */
-const SECTIONS = ['overview','incidents','rules','alerts','notifications','graphql','settings'];
+const SECTIONS = ['overview','incidents','rules','alerts','notifications','apitester','graphql','settings'];
 const TITLES = {
   overview: 'Vue d\'ensemble', incidents: 'Incidents', rules: 'Règles d\'alerte',
-  alerts: 'Alertes', notifications: 'Notifications', graphql: 'GraphQL Explorer', settings: 'Paramètres'
+  alerts: 'Alertes', notifications: 'Notifications', apitester: 'API Tester', graphql: 'GraphQL Explorer', settings: 'Paramètres'
 };
 
 document.querySelectorAll('.nav-item').forEach(el => {
@@ -35,6 +35,7 @@ function goSection(name) {
   else if (name === 'alerts') loadAlerts();
   else if (name === 'notifications') loadNotifications();
   else if (name === 'settings') renderEndpoints();
+  else if (name === 'apitester') updateCurlPreview();
 }
 
 /* ===== HEALTH CHECK ===== */
@@ -367,6 +368,130 @@ async function sendNotification() {
     document.getElementById('notif-message').value = '';
     loadNotifications();
   } catch { toast('Erreur de connexion', 'error'); }
+}
+
+/* ===== API TESTER ===== */
+let _testerActive = null;
+
+function loadTesterEndpoint(method, path, body, desc) {
+  // Mark active button
+  document.querySelectorAll('.apitester-ep-btn').forEach(b => b.classList.remove('active'));
+  event?.currentTarget?.classList.add('active');
+
+  document.getElementById('tester-method').value = method;
+  document.getElementById('tester-url').value = path;
+  document.getElementById('tester-body').value = body || '';
+  document.getElementById('tester-desc').textContent = desc || path;
+  document.getElementById('tester-result').textContent = '// Prêt à envoyer...';
+  document.getElementById('tester-result').style.color = 'var(--text3)';
+  document.getElementById('tester-status-badge').textContent = '';
+  document.getElementById('tester-status-badge').className = 'tester-status-badge';
+  _testerActive = { method, path, body, desc };
+  updateCurlPreview();
+  syncMethodColor();
+}
+
+function syncMethodColor() {
+  const sel = document.getElementById('tester-method');
+  const colors = { GET: 'var(--green)', POST: 'var(--accent)', PATCH: 'var(--orange)', DELETE: 'var(--red)' };
+  sel.style.color = colors[sel.value] || 'var(--text)';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const sel = document.getElementById('tester-method');
+  if (sel) sel.addEventListener('change', () => { syncMethodColor(); updateCurlPreview(); });
+  const urlInput = document.getElementById('tester-url');
+  if (urlInput) urlInput.addEventListener('input', updateCurlPreview);
+  const bodyInput = document.getElementById('tester-body');
+  if (bodyInput) bodyInput.addEventListener('input', updateCurlPreview);
+});
+
+async function runTesterRequest() {
+  const method  = document.getElementById('tester-method').value;
+  const path    = document.getElementById('tester-url').value.trim();
+  const bodyRaw = document.getElementById('tester-body').value.trim();
+  const resultEl = document.getElementById('tester-result');
+  const badge    = document.getElementById('tester-status-badge');
+
+  if (!path) { toast('Entrez un chemin d\'endpoint', 'error'); return; }
+
+  // Validate JSON body if present
+  let bodyObj = null;
+  if (bodyRaw && method !== 'GET' && method !== 'DELETE') {
+    try { bodyObj = JSON.parse(bodyRaw); }
+    catch { toast('Corps JSON invalide', 'error'); return; }
+  }
+
+  resultEl.style.color = 'var(--text3)';
+  resultEl.textContent = '// Envoi en cours...';
+  badge.textContent = '';
+  badge.className = 'tester-status-badge';
+
+  const start = Date.now();
+  try {
+    const opts = {
+      method,
+      headers: { 'Content-Type': 'application/json' }
+    };
+    if (bodyObj !== null) opts.body = JSON.stringify(bodyObj);
+
+    const res = await fetch(BASE_URL + path, opts);
+    const elapsed = Date.now() - start;
+    let data;
+    try { data = await res.json(); } catch { data = { raw: await res.text() }; }
+
+    const isOk = res.status >= 200 && res.status < 300;
+    const isWarn = res.status >= 300 && res.status < 500;
+
+    badge.textContent = `${res.status} · ${elapsed}ms`;
+    badge.className = 'tester-status-badge ' + (isOk ? 'ok' : isWarn ? 'warn' : 'err');
+    resultEl.style.color = isOk ? 'var(--green)' : 'var(--red)';
+    resultEl.textContent = JSON.stringify(data, null, 2);
+    toast(isOk ? `✓ ${res.status} OK` : `✕ ${res.status} Erreur`, isOk ? 'success' : 'error');
+  } catch (e) {
+    const elapsed = Date.now() - start;
+    badge.textContent = `ERR · ${elapsed}ms`;
+    badge.className = 'tester-status-badge err';
+    resultEl.style.color = 'var(--red)';
+    resultEl.textContent = '// Erreur réseau: ' + e.message + '\n// Vérifiez que le gateway tourne sur ' + BASE_URL;
+    toast('Erreur de connexion', 'error');
+  }
+}
+
+function buildCurlCommand() {
+  const method  = document.getElementById('tester-method')?.value || 'GET';
+  const path    = document.getElementById('tester-url')?.value?.trim() || '/health';
+  const bodyRaw = document.getElementById('tester-body')?.value?.trim() || '';
+  const url = BASE_URL + path;
+
+  let cmd = `curl -X ${method} "${url}"`;
+  if (bodyRaw && method !== 'GET' && method !== 'DELETE') {
+    cmd += ` \\
+  -H "Content-Type: application/json" \\
+  -d '${bodyRaw.replace(/\n/g, ' ')}'`;
+  }
+  return cmd;
+}
+
+function updateCurlPreview() {
+  const el = document.getElementById('tester-curl');
+  if (el) el.textContent = buildCurlCommand();
+}
+
+function copyTesterCurl() {
+  const cmd = buildCurlCommand();
+  navigator.clipboard.writeText(cmd).then(() => {
+    toast('Commande curl copiée !', 'success');
+  }).catch(() => {
+    // fallback
+    const ta = document.createElement('textarea');
+    ta.value = cmd;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+    toast('Commande curl copiée !', 'success');
+  });
 }
 
 /* ===== GRAPHQL ===== */

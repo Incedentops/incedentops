@@ -18,18 +18,18 @@ bin\windows\kafka-topics.bat --list --bootstrap-server localhost:9092
 
 
 Terminal 3 — Incident Service
-cd C:\Users\BYR GAMER\incedentops\incident-service
+cd C:\Users\bechi\incedentops\incident-service
 node index.js
 
 Terminal 4 — Alerting Service
-cd C:\Users\BYR GAMER\incedentops\alerting-service
+cd C:\Users\bechi\incedentops\alerting-service
 node index.js
 
 Terminal 5 — Notification Service
-cmdcd C:\Users\BYR GAMER\incedentops\notification-service
+cmdcd C:\Users\bechi\incedentops\notification-service
 node index.js
 
 
 Terminal 6 — Gateway 
-cd C:\Users\BYR GAMER\incedentops\ApiGetway
+cd C:\Users\bechi\incedentops\ApiGetway
 node index.js
