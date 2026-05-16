@@ -101,8 +101,9 @@ async function EvaluateIncident(call, callback) {
 function ListAlerts(call, callback) {
   try {
     const alerts = db.prepare('SELECT * FROM alerts ORDER BY triggered_at DESC').all();
-    callback(null, { alerts });
+    callback(null, { alerts: Array.isArray(alerts) ? alerts : [] });
   } catch (err) {
+    console.error('[Alerting] ListAlerts erreur:', err.message);
     callback(null, { alerts: [] });
   }
 }
